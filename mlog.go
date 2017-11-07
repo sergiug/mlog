@@ -17,16 +17,16 @@ type LogLevel int32
 
 const (
 	// LevelTrace logs everything
-	LevelTrace LogLevel = (1 << iota)
+	LevelTrace = 1
 
 	// LevelInfo logs Info, Warnings and Errors
-	LevelInfo
+	LevelInfo = 2
 
 	// LevelWarn logs Warning and Errors
-	LevelWarn
+	LevelWarn = 3
 
 	// LevelError logs just Errors
-	LevelError
+	LevelError = 4
 )
 
 const MaxBytes int = 10 * 1024 * 1024
@@ -165,6 +165,21 @@ func doLogging(logLevel LogLevel, fileName string, maxBytes, backupCount int) {
 
 	var fileHandle *RotatingFileHandler
 
+	switch logLevel {
+		case LevelTrace:
+			traceHandle = os.Stdout
+			fallthrough
+		case LevelInfo:
+			infoHandle = os.Stdout
+			fallthrough
+		case LevelWarn:
+			warnHandle = os.Stdout
+			fallthrough
+		case LevelError:
+			errorHandle = os.Stderr
+			fatalHandle = os.Stderr
+	}
+
 	if fileName != "" {
 		var err error
 		fileHandle, err = NewRotatingFileHandler(fileName, maxBytes, backupCount)
@@ -172,11 +187,25 @@ func doLogging(logLevel LogLevel, fileName string, maxBytes, backupCount int) {
 			log.Fatal("mlog: unable to create RotatingFileHandler: ", err)
 		}
 
-        traceHandle = io.MultiWriter(fileHandle)
-        infoHandle = io.MultiWriter(fileHandle)
-        warnHandle = io.MultiWriter(fileHandle)
-        errorHandle = io.MultiWriter(fileHandle)
-        fatalHandle = io.MultiWriter(fileHandle)
+		if traceHandle == os.Stdout {
+			traceHandle = io.MultiWriter(fileHandle)
+		}
+
+		if infoHandle == os.Stdout {
+			infoHandle = io.MultiWriter(fileHandle)
+		}
+
+		if warnHandle == os.Stdout {
+			warnHandle = io.MultiWriter(fileHandle)
+		}
+
+		if errorHandle == os.Stderr {
+			errorHandle = io.MultiWriter(fileHandle)
+		}
+
+		if fatalHandle == os.Stderr {
+			fatalHandle = io.MultiWriter(fileHandle)
+		}
 	}
 
 	Logger = mlog{
