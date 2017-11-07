@@ -165,21 +165,6 @@ func doLogging(logLevel LogLevel, fileName string, maxBytes, backupCount int) {
 
 	var fileHandle *RotatingFileHandler
 
-	switch logLevel {
-	case LevelTrace:
-		traceHandle = os.Stdout
-		fallthrough
-	case LevelInfo:
-		infoHandle = os.Stdout
-		fallthrough
-	case LevelWarn:
-		warnHandle = os.Stdout
-		fallthrough
-	case LevelError:
-		errorHandle = os.Stderr
-		fatalHandle = os.Stderr
-	}
-
 	if fileName != "" {
 		var err error
 		fileHandle, err = NewRotatingFileHandler(fileName, maxBytes, backupCount)
@@ -187,25 +172,11 @@ func doLogging(logLevel LogLevel, fileName string, maxBytes, backupCount int) {
 			log.Fatal("mlog: unable to create RotatingFileHandler: ", err)
 		}
 
-		if traceHandle == os.Stdout {
-			traceHandle = io.MultiWriter(fileHandle, traceHandle)
-		}
-
-		if infoHandle == os.Stdout {
-			infoHandle = io.MultiWriter(fileHandle, infoHandle)
-		}
-
-		if warnHandle == os.Stdout {
-			warnHandle = io.MultiWriter(fileHandle, warnHandle)
-		}
-
-		if errorHandle == os.Stderr {
-			errorHandle = io.MultiWriter(fileHandle, errorHandle)
-		}
-
-		if fatalHandle == os.Stderr {
-			fatalHandle = io.MultiWriter(fileHandle, fatalHandle)
-		}
+        traceHandle = io.MultiWriter(fileHandle)
+        infoHandle = io.MultiWriter(fileHandle)
+        warnHandle = io.MultiWriter(fileHandle)
+        errorHandle = io.MultiWriter(fileHandle)
+        fatalHandle = io.MultiWriter(fileHandle)
 	}
 
 	Logger = mlog{
@@ -213,7 +184,7 @@ func doLogging(logLevel LogLevel, fileName string, maxBytes, backupCount int) {
 		Info:    log.New(infoHandle, "I: ", DefaultFlags),
 		Warning: log.New(warnHandle, "W: ", DefaultFlags),
 		Error:   log.New(errorHandle, "E: ", DefaultFlags),
-		Fatal:   log.New(errorHandle, "F: ", DefaultFlags),
+		Fatal:   log.New(fatalHandle, "F: ", DefaultFlags),
 		LogFile: fileHandle,
 	}
 
